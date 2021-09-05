@@ -1,19 +1,17 @@
 import 'dart:io';
 
 import 'package:moor/ffi.dart';
-import 'package:moor_flutter/moor_flutter.dart';
-import 'package:path/path.dart';
+import 'package:moor/moor.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 part 'local_db.g.dart';
 
-LazyDatabase _openConnection() {
-  // the LazyDatabase util lets us find the right location for the file async.
+LazyDatabase _openDB() {
   return LazyDatabase(() async {
-    // put the database file, called db.sqlite here, into the documents folder
-    // for your app.
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(join(dbFolder.path, 'db.sqlite'));
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final dbDir = await Directory(p.join(documentsDir.path, 'golden_gym')).create(recursive: true);
+    final file = File(p.join(dbDir.path, 'db.sqlite'));
     return VmDatabase(file);
   });
 }
@@ -31,10 +29,9 @@ class Members extends Table {
 @UseMoor(tables: [Members], daos: [MemberDao])
 // _$AppDatabase is the name of the generated class
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(FlutterQueryExecutor.inDatabaseFolder(path: 'db.sqlite', logStatements: true));
+  AppDatabase() : super(_openDB());
 
   @override
-  // ignore: override_on_non_overriding_member
   int get schemaVersion => 1;
 }
 
@@ -56,5 +53,12 @@ class MemberDao extends DatabaseAccessor<AppDatabase> with _$MemberDaoMixin {
             // (t) => OrderingTerm.asc(t.name),
           ]))
         .watch();
+  }
+
+  Stream<List<Member>> watchMembersS(String query) {
+    final s = select(members)
+      ..where((tbl) => tbl.name.contains(query))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return s.watch();
   }
 }

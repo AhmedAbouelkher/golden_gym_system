@@ -4,7 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:golden_gym_system/db/local_db.dart';
-import 'package:moor_flutter/moor_flutter.dart' hide Column;
+import 'package:moor/moor.dart' hide Column;
 import 'package:provider/provider.dart';
 
 enum FormFields {
@@ -40,17 +40,17 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
           onPressed: () async {
             final db = context.read<MemberDao>();
             var currentState = _formKey.currentState!;
-            currentState.validate();
+            // currentState.validate();
             // if (imageFile == null) return;
-            final name = currentState.fields[FormFields.name.toStr()]!.value as String;
-            final memebershipStart = currentState.fields[FormFields.membershipStart.toStr()]!.value as DateTime;
-            final memebershipEnd = currentState.fields[FormFields.membershipEnd.toStr()]!.value as DateTime;
+            // final name = currentState.fields[FormFields.name.toStr()]!.value as String;
+            // final memebershipStart = currentState.fields[FormFields.membershipStart.toStr()]!.value as DateTime;
+            // final memebershipEnd = currentState.fields[FormFields.membershipEnd.toStr()]!.value as DateTime;
             // final memebershipType = currentState.fields[FormFields.membershipType.toStr()]!.value as String;
 
             final m = MembersCompanion(
-              name: Value(name),
-              membershipStart: Value(memebershipStart),
-              membershipEnd: Value(memebershipEnd),
+              name: Value("name"),
+              membershipStart: Value(DateTime.now()),
+              membershipEnd: Value(DateTime.now().add(Duration(days: 1))),
             );
             await db.insertMember(m);
             Navigator.pop(context);
