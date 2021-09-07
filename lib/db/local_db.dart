@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:golden_gym_system/controllers/provider.dart';
 import 'package:moor/ffi.dart';
 import 'package:moor/moor.dart';
 import 'package:moor_flutter/moor_flutter.dart';
@@ -23,20 +24,18 @@ QueryExecutor _openDB([bool log = true]) {
 class Members extends Table {
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get code => integer()();
   TextColumn get name => text().withLength(min: 1)();
-  BlobColumn get image => blob().nullable()();
-
-  DateTimeColumn get membershipStart => dateTime()();
-  DateTimeColumn get membershipEnd => dateTime()();
+  TextColumn get image => text().nullable()();
   TextColumn get membershipType => text()();
 
+  RealColumn get height => real().nullable()();
   RealColumn get weight => real().nullable()();
-  IntColumn get height => integer().nullable()();
-
   RealColumn get muscleMass => real().nullable()();
   RealColumn get burnRate => real().nullable()();
   RealColumn get fatPersentage => real().nullable()();
+
+  DateTimeColumn get membershipStart => dateTime()();
+  DateTimeColumn get membershipEnd => dateTime()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -64,24 +63,61 @@ class MemberDao extends DatabaseAccessor<AppDatabase> with _$MemberDaoMixin {
 
   Future<int> deleteMember(Insertable<Member> member) => delete(members).delete(member);
 
-  Future<bool> doesCodeExist(int code) async {
-    final query = select(members)..where((mbr) => mbr.code.equals(code));
+  Future<bool> doesCodeExist(int id) async {
+    final query = select(members)..where((mbr) => mbr.id.equals(id));
     final member = await query.getSingleOrNull();
     return member != null;
   }
 
-  Stream<List<Member>> fetchMembers({String? query, bool isNumeric = false}) {
+  Stream<List<Member>> fetchMembers({TColumnSort? sort}) {
+    var s = select(members);
+    final _sort = sort ?? kColumnSort;
+    switch (_sort.column) {
+      case TableColumn.id:
+        s.orderBy([(t) => OrderingTerm(expression: t.id, mode: _sort.mode)]);
+        break;
+      case TableColumn.name:
+        s.orderBy([(t) => OrderingTerm(expression: t.name, mode: _sort.mode)]);
+        break;
+      case TableColumn.membershipEnd:
+        s.orderBy([(t) => OrderingTerm(expression: t.membershipEnd, mode: _sort.mode)]);
+        break;
+    }
+    return s.watch();
+  }
+
+  Future<List<Member>> searchMembers({
+    String? query,
+    bool isNumeric = false,
+    TColumnSort? sort,
+  }) {
     var s = select(members);
     if (query != null && query != '') {
       if (isNumeric) {
-        s.where((member) => member.code.cast<String>().contains(query));
+        s.where((member) => member.id.cast<String>().contains(query));
       } else {
         s.where((member) => member.name.contains(query));
       }
     }
-    s.orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    final _sort = sort ?? kColumnSort;
+    switch (_sort.column) {
+      case TableColumn.id:
+        s.orderBy([(t) => OrderingTerm(expression: t.id, mode: _sort.mode)]);
+        break;
+      case TableColumn.name:
+        s.orderBy([(t) => OrderingTerm(expression: t.name, mode: _sort.mode)]);
+        break;
+      case TableColumn.membershipEnd:
+        s.orderBy([(t) => OrderingTerm(expression: t.membershipEnd, mode: _sort.mode)]);
+        break;
+    }
 
-    return s.watch();
+    return s.get();
+  }
+
+  Stream<Member> watchMember(int id) {
+    final query = select(members)..where((mbr) => mbr.id.equals(id));
+    return query.watchSingle();
   }
 
   Future<int> rowsCount() async {

@@ -1,9 +1,20 @@
+import 'dart:io';
+
 import 'package:data_tables/data_tables.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:golden_gym_system/controllers/provider.dart';
-import 'package:golden_gym_system/db/local_db.dart';
+import 'package:golden_gym_system/main.dart';
+import 'package:golden_gym_system/screens/search.dart';
+import 'package:golden_gym_system/utilities/os.dart';
+import 'package:moor/moor.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
+import 'package:golden_gym_system/controllers/provider.dart';
+import 'package:golden_gym_system/db/local_db.dart';
+
+import '../utilities/datetime_format.dart';
 import 'member_details.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,9 +25,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _sortColumnIndex = 0;
+  bool _sortAscending = true;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      context.read<MembersProvider>().initMembers();
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final memberProvider = context.read<MembersProvider>();
+    final sort = context.select<MembersProvider, TColumnSort>((p) => p.sort);
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: Row(
@@ -29,49 +52,81 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
-            heroTag: 's',
+            heroTag: 'general_button',
             onPressed: () async {
               memberProvider.addDummyMember();
+              // await copyImage(File('/Users/ahmedmahmoud/Desktop/img.png'), 'new');
+              // print("DONE");
+              // try {
+              //   final f = await memberProvider.doCodeExist(129);
+              //   print(f);
+              // } catch (e) {
+              //   print(e);
+              // }
             },
           ),
         ],
       ),
       body: SafeArea(
-        child: StreamBuilder<List<Member>>(
-            stream: memberProvider.fetchMemers(),
-            builder: (context, snapshot) {
-              final members = snapshot.data ?? const [];
-              return NativeDataTable.builder(
-                rowsPerPage: 10,
-                itemCount: members.length,
-                header: const Text("This is a header"),
-                columns: const [
-                  DataColumn(label: Text("Code")),
-                  DataColumn(label: Text("Name")),
-                  DataColumn(label: Text("Start")),
-                  DataColumn(label: Text("End")),
-                  DataColumn(label: Text("Created At")),
-                  DataColumn(label: SizedBox.shrink()),
-                ],
-                itemBuilder: (index) {
-                  final member = members[index];
-                  return DataRow.byIndex(
-                    index: index,
-                    cells: [
-                      DataCell(Text('${member.code}')),
-                      DataCell(Text(member.name), onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => AddMemeberScreen(member: member)));
-                      }),
-                      DataCell(Text(member.membershipStart.toIso8601String())),
-                      DataCell(Text(member.membershipEnd.toIso8601String())),
-                      DataCell(Text(member.createdAt.millisecondsSinceEpoch.toString())),
-                      DataCell(IconButton(onPressed: () {}, icon: const Icon(Icons.edit))),
+        child: Selector<MembersProvider, Stream<List<Member>>?>(
+            selector: (_, provider) => provider.members,
+            builder: (context, _membersStream, child) {
+              if (_membersStream == null) return const Center(child: CircularProgressIndicator());
+              return StreamBuilder<List<Member>>(
+                stream: _membersStream,
+                builder: (context, snapshot) {
+                  final members = snapshot.data ?? const [];
+
+                  return NativeDataTable.builder(
+                    rowsPerPage: members.isEmpty ? 10 : members.length,
+                    itemCount: members.length,
+                    totalItems: members.length,
+                    header: Row(
+                      children: [
+                        Image.asset(Constants.logo, width: 40, fit: BoxFit.fitWidth),
+                        const SizedBox(width: 10),
+                        Text("Golden Gym", style: TextStyle(color: CColors.gold)),
+                      ],
+                    ),
+                    noItems: const Text("لا يوجد اي اعضاء مسجلين حتي لان"),
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchScreen()));
+                        },
+                        icon: const Icon(Icons.search),
+                      )
                     ],
+                    sortColumnIndex: sort.columnIndex,
+                    sortAscending: sort.mode == OrderingMode.asc,
+                    columns: [
+                      DataColumn(label: const Text("ID"), onSort: memberProvider.changeMembersN),
+                      DataColumn(label: const Text("الاسم"), onSort: memberProvider.changeMembersN),
+                      DataColumn(label: const Text("نهاية الاشتراك"), onSort: memberProvider.changeMembersN),
+                    ],
+                    itemBuilder: (index) {
+                      final member = members[index];
+                      return DataRow.byIndex(
+                        index: index,
+                        cells: [
+                          DataCell(Text('${member.id}'), onTap: () => _goToMember(member)),
+                          DataCell(Text(member.name), onTap: () => _goToMember(member)),
+                          DataCell(
+                            Text(member.membershipEnd.toLocalizedDateString(locale: context.locale)),
+                            onTap: () => _goToMember(member),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               );
             }),
       ),
     );
+  }
+
+  void _goToMember(Member member) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => AddMemeberScreen(member: member)));
   }
 }

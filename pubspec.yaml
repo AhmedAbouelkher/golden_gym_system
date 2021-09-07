@@ -55,9 +55,22 @@ dependencies:
 
   flutter_form_builder: ^6.1.0+1
 
+  intl: ^0.17.0
+  date_time_format: ^2.0.1
+
   provider:
 
+  rxdart: ^0.27.2
+
+  tuple: ^2.0.0
+
   faker: ^2.0.0
+
+  window_size:
+    git:
+      url: git://github.com/google/flutter-desktop-embedding.git
+      path: plugins/window_size
+      ref: e48abe7c3e9ebfe0b81622167c5201d4e783bb81
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +99,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/translations/
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
