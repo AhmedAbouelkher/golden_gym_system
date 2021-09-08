@@ -43,21 +43,13 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const AddMemeberScreen()));
             },
           ),
-          const SizedBox(width: 20),
-          FloatingActionButton(
-            heroTag: 'general_button',
-            onPressed: () async {
-              memberProvider.addDummyMember();
-              // await copyImage(File('/Users/ahmedmahmoud/Desktop/img.png'), 'new');
-              // print("DONE");
-              // try {
-              //   final f = await memberProvider.doCodeExist(129);
-              //   print(f);
-              // } catch (e) {
-              //   print(e);
-              // }
-            },
-          ),
+          // const SizedBox(width: 20),
+          // FloatingActionButton(
+          //   heroTag: 'general_button',
+          //   onPressed: () {
+          //     memberProvider.addDummyMember();
+          //   },
+          // ),
         ],
       ),
       body: SafeArea(
@@ -95,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     columns: [
                       DataColumn(label: const Text("ID"), onSort: memberProvider.changeMembersN),
                       DataColumn(label: const Text("الاسم"), onSort: memberProvider.changeMembersN),
+                      DataColumn(label: const Text("بداية الاشتراك"), onSort: memberProvider.changeMembersN),
                       DataColumn(label: const Text("نهاية الاشتراك"), onSort: memberProvider.changeMembersN),
                     ],
                     itemBuilder: (index) {
@@ -105,7 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           DataCell(Text('${member.id}'), onTap: () => _goToMember(member)),
                           DataCell(Text(member.name), onTap: () => _goToMember(member)),
                           DataCell(
-                            Text(member.membershipEnd.toLocalizedDateString(locale: context.locale)),
+                            Text(member.membershipStart.toLocalizedDateString()),
+                            onTap: () => _goToMember(member),
+                          ),
+                          DataCell(
+                            Text(member.membershipEnd.toLocalizedDateString()),
                             onTap: () => _goToMember(member),
                           ),
                         ],

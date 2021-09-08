@@ -61,7 +61,8 @@ class _SearchScreenState extends State<SearchScreen> {
               final members = data.item1;
               final sort = data.item2;
               return NativeDataTable.builder(
-                rowsPerPage: members.isEmpty ? 10 : members.length,
+                // rowsPerPage: members.isEmpty ? 10 : members.length,
+                rowsPerPage: 10,
                 itemCount: members.length,
                 totalItems: members.length,
                 header: Row(
@@ -70,6 +71,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
+                        autofocus: true,
                         controller: _textEditingController,
                         decoration: const InputDecoration(hintText: "ادخل اسم العضو او الـ ID الخاص به"),
                       ),
@@ -82,6 +84,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 columns: [
                   DataColumn(label: const Text("ID"), onSort: searchProvider.changeMembers),
                   DataColumn(label: const Text("الاسم"), onSort: searchProvider.changeMembers),
+                  DataColumn(label: const Text("بداية الاشتراك"), onSort: searchProvider.changeMembers),
                   DataColumn(label: const Text("نهاية الاشتراك"), onSort: searchProvider.changeMembers),
                 ],
                 itemBuilder: (index) {
@@ -92,7 +95,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       DataCell(Text('${member.id}'), onTap: () => _goToMember(member)),
                       DataCell(Text(member.name), onTap: () => _goToMember(member)),
                       DataCell(
-                        Text(member.membershipEnd.toLocalizedDateString(locale: context.locale)),
+                        Text(member.membershipStart.toLocalizedDateString()),
+                        onTap: () => _goToMember(member),
+                      ),
+                      DataCell(
+                        Text(member.membershipEnd.toLocalizedDateString()),
                         onTap: () => _goToMember(member),
                       ),
                     ],

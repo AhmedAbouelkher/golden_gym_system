@@ -16,6 +16,7 @@ class UserNotExists implements Exception {}
 enum TableColumn {
   id,
   name,
+  membershipStart,
   membershipEnd,
 }
 
@@ -108,8 +109,8 @@ MembersCompanion updateMemberFromFields(Map<String, FormBuilderFieldState> field
   }
 
   final _member = member.toCompanion(false);
-
-  final membershipType = Value(enumToString(getFormValue<MembershipType>(ForrmField.membershipType)!));
+  final n = getFormValue<MembershipType>(ForrmField.membershipType)!;
+  final membershipType = Value(enumToString(n.value));
   return _member.copyWith(
     name: getFormValue<String>(ForrmField.name),
     membershipStart: getFormValue<DateTime>(ForrmField.membershipStart),
@@ -123,7 +124,7 @@ MembersCompanion updateMemberFromFields(Map<String, FormBuilderFieldState> field
   );
 }
 
-TColumnSort kColumnSort = TColumnSort(column: TableColumn.membershipEnd, columnIndex: 2);
+TColumnSort kColumnSort = TColumnSort(column: TableColumn.membershipEnd, columnIndex: 3);
 
 class SearchMembersProvider extends ChangeNotifier {
   final MemberDao _dao;
@@ -142,16 +143,24 @@ class SearchMembersProvider extends ChangeNotifier {
 
   void changeMembers(int columnIndex, bool ascending) async {
     final column = TableColumn.values[columnIndex];
-    final _sorrt = TColumnSort.sort(column: column, columnIndex: columnIndex, ascending: ascending);
-    _members = await _dao.searchMembers(query: _query, isNumeric: _isNumericQ);
-    _sort = _sorrt;
+    final newSort = TColumnSort.sort(column: column, columnIndex: columnIndex, ascending: ascending);
+    _sort = newSort;
+    _members = await _dao.searchMembers(
+      query: _query,
+      isNumeric: _isNumericQ,
+      sort: _sort,
+    );
     notifyListeners();
   }
 
   void searchMembers(String query) async {
     _query = query;
     _isNumericQ = isNumeric(_query);
-    _members = await _dao.searchMembers(query: _query, isNumeric: _isNumericQ);
+    _members = await _dao.searchMembers(
+      query: _query,
+      isNumeric: _isNumericQ,
+      sort: _sort,
+    );
     notifyListeners();
   }
 }

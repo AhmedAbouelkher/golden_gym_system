@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:sqlite3/open.dart';
+import 'package:window_size/window_size.dart';
 
 import './db/local_db.dart';
 import 'controllers/provider.dart';
@@ -14,6 +15,8 @@ import 'screens/home.dart';
 
 //? https://moor.simonbinder.eu/docs/platforms/#desktop
 //? https://github.com/simolus3/moor/issues/731
+
+//? flutter clean; flutter pub get; flutter build windows; start .\build\windows\runner\Release\; Copy-Item ".\sqlite3.dll"  -Destination ".\build\windows\runner\Release\"
 
 class CColors {
   CColors._();
@@ -39,15 +42,17 @@ DynamicLibrary _openOnWindows() {
 }
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   if (Platform.isWindows) {
     open.overrideFor(OperatingSystem.windows, _openOnWindows);
   }
 
-  // if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-  //   // setWindowTitle("Golden Gym");
-  //   setWindowMinSize(const Size(800, 500));
-  //   setWindowMaxSize(Size.infinite);
-  // }
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    setWindowTitle('Golden Gym');
+    setWindowMinSize(const Size(850, 600));
+    setWindowMaxSize(Size(900, double.infinity));
+  }
 
   EasyLocalization.logger.enableLevels = <LevelMessages>[
     LevelMessages.error,
@@ -92,9 +97,6 @@ class MyApp extends StatelessWidget {
 
   ThemeData _renderAppTheme() {
     return ThemeData.dark().copyWith(
-      progressIndicatorTheme: ThemeData.dark().progressIndicatorTheme.copyWith(
-            color: CColors.darkGold,
-          ),
       inputDecorationTheme: ThemeData.dark().inputDecorationTheme.copyWith(
             focusColor: Colors.amber,
             fillColor: CColors.lightBlack,

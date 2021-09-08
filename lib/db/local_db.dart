@@ -17,6 +17,7 @@ QueryExecutor _openDB([bool log = true]) {
     final documentsDir = await getApplicationDocumentsDirectory();
     final dbDir = await Directory(p.join(documentsDir.path, 'golden_gym')).create(recursive: true);
     final file = File(p.join(dbDir.path, 'db.sqlite'));
+    print(file.path);
     return VmDatabase(file, logStatements: log);
   });
 }
@@ -79,6 +80,9 @@ class MemberDao extends DatabaseAccessor<AppDatabase> with _$MemberDaoMixin {
       case TableColumn.name:
         s.orderBy([(t) => OrderingTerm(expression: t.name, mode: _sort.mode)]);
         break;
+      case TableColumn.membershipStart:
+        s.orderBy([(t) => OrderingTerm(expression: t.membershipStart, mode: _sort.mode)]);
+        break;
       case TableColumn.membershipEnd:
         s.orderBy([(t) => OrderingTerm(expression: t.membershipEnd, mode: _sort.mode)]);
         break;
@@ -86,11 +90,7 @@ class MemberDao extends DatabaseAccessor<AppDatabase> with _$MemberDaoMixin {
     return s.watch();
   }
 
-  Future<List<Member>> searchMembers({
-    String? query,
-    bool isNumeric = false,
-    TColumnSort? sort,
-  }) {
+  Future<List<Member>> searchMembers({String? query, bool isNumeric = false, TColumnSort? sort}) {
     var s = select(members);
     if (query != null && query != '') {
       if (isNumeric) {
@@ -106,6 +106,9 @@ class MemberDao extends DatabaseAccessor<AppDatabase> with _$MemberDaoMixin {
         break;
       case TableColumn.name:
         s.orderBy([(t) => OrderingTerm(expression: t.name, mode: _sort.mode)]);
+        break;
+      case TableColumn.membershipStart:
+        s.orderBy([(t) => OrderingTerm(expression: t.membershipStart, mode: _sort.mode)]);
         break;
       case TableColumn.membershipEnd:
         s.orderBy([(t) => OrderingTerm(expression: t.membershipEnd, mode: _sort.mode)]);

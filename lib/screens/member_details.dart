@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 import 'package:golden_gym_system/controllers/provider.dart';
 import 'package:golden_gym_system/db/local_db.dart';
@@ -28,10 +28,11 @@ class AddMemeberScreen extends StatefulWidget {
 
 class _AddMemeberScreenState extends State<AddMemeberScreen> {
   Member? _member;
+  DateTime? _startDate;
 
   File? imageFile;
   final _formKey = GlobalKey<FormBuilderState>();
-  late final StreamSubscription<Member> _streamSubscription;
+  StreamSubscription<Member>? _streamSubscription;
 
   late bool _inViewMode;
 
@@ -49,7 +50,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
             setState(() {
               _member = member;
 
-              imageFile = File(_member!.image!);
+              imageFile = _member?.image != null ? File(_member!.image!) : null;
             });
           }
         });
@@ -60,7 +61,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
 
   @override
   void dispose() {
-    _streamSubscription.cancel();
+    _streamSubscription?.cancel();
     super.dispose();
   }
 
@@ -88,6 +89,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
     if (!currentState!.saveAndValidate()) return;
     final memberProvider = context.read<MembersProvider>();
     final member = updateMemberFromFields(currentState.fields, member: _member!);
+    print(member);
     try {
       await memberProvider.updateMember(member, imageFile);
       // Navigator.pop(context);
@@ -120,7 +122,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
   }
 
   void _selectImage() async {
-    final typeGroup = XTypeGroup(label: 'images', extensions: ['jpg', 'png']);
+    final typeGroup = XTypeGroup(label: 'images', extensions: ['jpg', 'png', 'jpeg']);
     final file = await openFile(acceptedTypeGroups: [typeGroup]);
     if (file == null) return;
     setState(() => imageFile = File(file.path));
@@ -129,6 +131,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
   @override
   Widget build(BuildContext context) {
     // print(_member?.image ?? '-');
+    final size = MediaQuery.of(context).size;
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -164,33 +167,44 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
                   alignment: const Alignment(0.0, -0.9),
                   child: Column(
                     children: [
-                      InkWell(
-                        onDoubleTap: () {
-                          if (imageFile == null && !_inViewMode) return;
-                          ImageDialog(
-                            image: FileImage(imageFile!),
-                          ).show(context);
-                        },
-                        onTap: () {
-                          if (_inViewMode) return _selectImage();
-                          if (imageFile == null) return;
-                          ImageDialog(
-                            image: FileImage(imageFile!),
-                          ).show(context);
-                        },
-                        child: _buildImage(),
-                      ),
-                      const SizedBox(height: 40),
-                      DefaultTextStyle(
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-                        child: Column(
-                          children: [
-                            const Text("تم التحديث في"),
-                            const SizedBox(height: 6),
-                            Text(_member?.updatedAt.toLocalizedDateTime(locale: context.locale) ?? '-'),
-                          ],
+                      SizedBox(height: 30),
+                      Container(
+                        constraints: BoxConstraints.loose(Size(size.width * 0.3, double.infinity)),
+                        child: InkWell(
+                          onDoubleTap: () {
+                            if (imageFile == null && !_inViewMode) return;
+                            ImageDialog(
+                              image: FileImage(imageFile!),
+                            ).show(context);
+                          },
+                          onTap: () {
+                            if (_inViewMode) return _selectImage();
+                            if (imageFile == null) return;
+                            ImageDialog(
+                              image: FileImage(imageFile!),
+                            ).show(context);
+                          },
+                          child: _buildImage(),
                         ),
                       ),
+                      if (_member != null) ...[
+                        const SizedBox(height: 40),
+                        DefaultTextStyle(
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                          child: Column(
+                            children: [
+                              const Text("تم التحديث في"),
+                              const SizedBox(height: 6),
+                              Column(
+                                children: [
+                                  Text(_member?.updatedAt.toLocalizedDateString() ?? '-'),
+                                  Text(_member?.updatedAt.toLocalizedTimeString() ?? '-'),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ]
                     ],
                   ),
                 ),
@@ -255,8 +269,8 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
   }
 
   List<Widget> _forms() {
+    print(_startDate);
     final memberProvider = context.read<MembersProvider>();
-
     return <Widget>[
       FormBuilderTextField(
         enabled: _inViewMode,
@@ -270,6 +284,7 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
       FormBuilderDateTimePicker(
         enabled: _inViewMode,
         inputType: InputType.date,
+        onChanged: (value) => _startDate = value,
         name: ForrmField.membershipStart.toStr(),
         initialValue: _member?.membershipStart,
         decoration: const InputDecoration(labelText: 'بداية الاشتراك'),
@@ -279,23 +294,24 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
       ),
       FormBuilderDateTimePicker(
         enabled: _inViewMode,
+        initialDate: _startDate?.add(Duration(days: 1)) ?? DateTime.now(),
         inputType: InputType.date,
         name: ForrmField.membershipEnd.toStr(),
         initialValue: _member?.membershipEnd,
         decoration: const InputDecoration(labelText: 'نهاية الاشتراك'),
+        selectableDayPredicate: (day) => _startDate != null ? day.isAfter(_startDate!) : true,
         validator: FormBuilderValidators.compose([
           FormBuilderValidators.required(context),
         ]),
       ),
       FormBuilderDropdown(
         enabled: _inViewMode,
-        initialValue: (_member == null
-                ? null
-                : enumFromString(
-                    _member!.membershipType,
-                    MembershipType.values,
-                  )) ??
-            MembershipType.normal,
+        initialValue: _member != null
+            ? enumFromString(
+                _member!.membershipType,
+                MembershipType.values,
+              )
+            : null,
         name: ForrmField.membershipType.toStr(),
         decoration: const InputDecoration(labelText: 'نوع الاشتراك'),
         allowClear: true,
