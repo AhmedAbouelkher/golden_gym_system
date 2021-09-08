@@ -6,11 +6,11 @@ import 'package:easy_logger/easy_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
-import 'package:window_size/window_size.dart';
+import 'package:sqlite3/open.dart';
+
+import './db/local_db.dart';
 import 'controllers/provider.dart';
 import 'screens/home.dart';
-import './db/local_db.dart';
-import 'package:sqlite3/open.dart';
 
 //? https://moor.simonbinder.eu/docs/platforms/#desktop
 //? https://github.com/simolus3/moor/issues/731
@@ -69,6 +69,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     // ignore: prefer_const_constructors

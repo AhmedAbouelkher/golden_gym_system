@@ -8,10 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:golden_gym_system/controllers/provider.dart';
 import 'package:golden_gym_system/db/local_db.dart';
 import 'package:golden_gym_system/utilities/general.dart';
+
+import '../utilities/datetime_format.dart';
 
 import 'view_image.dart';
 
@@ -159,21 +162,36 @@ class _AddMemeberScreenState extends State<AddMemeberScreen> {
               Expanded(
                 child: Align(
                   alignment: const Alignment(0.0, -0.9),
-                  child: InkWell(
-                    onDoubleTap: () {
-                      if (imageFile == null && !_inViewMode) return;
-                      ImageDialog(
-                        image: FileImage(imageFile!),
-                      ).show(context);
-                    },
-                    onTap: () {
-                      if (_inViewMode) return _selectImage();
-                      if (imageFile == null) return;
-                      ImageDialog(
-                        image: FileImage(imageFile!),
-                      ).show(context);
-                    },
-                    child: _buildImage(),
+                  child: Column(
+                    children: [
+                      InkWell(
+                        onDoubleTap: () {
+                          if (imageFile == null && !_inViewMode) return;
+                          ImageDialog(
+                            image: FileImage(imageFile!),
+                          ).show(context);
+                        },
+                        onTap: () {
+                          if (_inViewMode) return _selectImage();
+                          if (imageFile == null) return;
+                          ImageDialog(
+                            image: FileImage(imageFile!),
+                          ).show(context);
+                        },
+                        child: _buildImage(),
+                      ),
+                      const SizedBox(height: 40),
+                      DefaultTextStyle(
+                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        child: Column(
+                          children: [
+                            const Text("تم التحديث في"),
+                            const SizedBox(height: 6),
+                            Text(_member?.updatedAt.toLocalizedDateTime(locale: context.locale) ?? '-'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

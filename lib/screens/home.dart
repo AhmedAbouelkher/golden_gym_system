@@ -1,18 +1,14 @@
-import 'dart:io';
-
 import 'package:data_tables/data_tables.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:golden_gym_system/main.dart';
-import 'package:golden_gym_system/screens/search.dart';
-import 'package:golden_gym_system/utilities/os.dart';
 import 'package:moor/moor.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:golden_gym_system/controllers/provider.dart';
 import 'package:golden_gym_system/db/local_db.dart';
+import 'package:golden_gym_system/main.dart';
+import 'package:golden_gym_system/screens/search.dart';
 
 import '../utilities/datetime_format.dart';
 import 'member_details.dart';
@@ -25,9 +21,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _sortColumnIndex = 0;
-  bool _sortAscending = true;
-
   @override
   void initState() {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
