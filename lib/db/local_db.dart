@@ -6,17 +6,28 @@ import 'package:moor/moor.dart';
 import 'package:moor_flutter/moor_flutter.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
 
 part 'local_db.g.dart';
+
+Future<File> getDBFile() async {
+  if (Platform.isMacOS) {
+    final path = p.join(await getDatabasesPath(), 'local_db.sqlite');
+    print("DB File is in $path");
+    return File(path);
+  }
+  final documentsDir = await getApplicationDocumentsDirectory();
+  final dbDir = await Directory(p.join(documentsDir.path, 'golden_gym')).create(recursive: true);
+  final file = File(p.join(dbDir.path, 'db.sqlite'));
+  return file;
+}
 
 QueryExecutor _openDB([bool log = true]) {
   if (Platform.isMacOS) {
     return FlutterQueryExecutor.inDatabaseFolder(path: 'local_db.sqlite', logStatements: log);
   }
   return LazyDatabase(() async {
-    final documentsDir = await getApplicationDocumentsDirectory();
-    final dbDir = await Directory(p.join(documentsDir.path, 'golden_gym')).create(recursive: true);
-    final file = File(p.join(dbDir.path, 'db.sqlite'));
+    final file = await getDBFile();
     print(file.path);
     return VmDatabase(file, logStatements: log);
   });

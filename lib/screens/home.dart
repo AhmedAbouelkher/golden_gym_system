@@ -2,6 +2,7 @@ import 'package:data_tables/data_tables.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:golden_gym_system/controllers/db_backup.dart';
 import 'package:moor/moor.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
       context.read<MembersProvider>().initMembers();
+      context.read<BackUp>().init();
     });
     super.initState();
   }

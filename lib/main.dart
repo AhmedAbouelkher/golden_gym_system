@@ -10,6 +10,7 @@ import 'package:sqlite3/open.dart';
 import 'package:window_size/window_size.dart';
 
 import './db/local_db.dart';
+import 'controllers/db_backup.dart';
 import 'controllers/provider.dart';
 import 'screens/home.dart';
 
@@ -51,7 +52,7 @@ void main() {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('Golden Gym');
     setWindowMinSize(const Size(850, 600));
-    setWindowMaxSize(Size(900, double.infinity));
+    setWindowMaxSize(const Size(900, double.infinity));
   }
 
   EasyLocalization.logger.enableLevels = <LevelMessages>[
@@ -68,7 +69,7 @@ void main() {
     startLocale: const Locale('ar', 'EG'),
     child: Provider(
       create: (_) => AppDatabase().memberDao,
-      child: MyApp(),
+      child: const MyApp(),
     ),
   ));
 }
@@ -82,6 +83,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => MembersProvider(context.read<MemberDao>())),
         ChangeNotifierProvider(create: (_) => SearchMembersProvider(context.read<MemberDao>())),
+        Provider(create: (_) => BackUp()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
